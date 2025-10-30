@@ -128,3 +128,96 @@ The following properties are available in the schema for the `submit` key in **e
 ### iOS-specific options
 
 <EasJsonPropertiesTable schema={submitIosSchema} />
+// components/ToolCard.js
+import React from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+
+const ToolCard = ({ tool, onPress }) => {
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress}>
+      <Image source={{ uri: tool.images[0] }} style={styles.image} />
+      <View style={styles.details}>
+        <Text style={styles.name}>{tool.name}</Text>
+        <Text style={styles.owner}>By {tool.ownerName}</Text>
+        <Text style={styles.price}>${tool.dailyRate}/day</Text>
+        <Text style={styles.distance}>{tool.distance} miles away</Text>
+        <View style={styles.rating}>
+          <Text>⭐ {tool.rating} ({tool.reviewCount})</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    margin: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  image: {
+    width: '100%',
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  details: {
+    padding: 12,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  price: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF9500', // Construction yellow
+    marginTop: 4,
+  },
+});
+// server/models/Tool.js
+const mongoose = require('mongoose');
+
+const toolSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  category: { type: String, required: true },
+  description: String,
+  dailyRate: { type: Number, required: true },
+  weeklyRate: Number,
+  deposit: Number,
+  images: [String],
+  location: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: [0, 0] }
+  },
+  availability: {
+    startDate: Date,
+    endDate: Date,
+    isAvailable: { type: Boolean, default: true }
+  },
+  features: [String],
+  rating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 }
+}, { timestamps: true });
+
+toolSchema.index({ location: '2dsphere' });
+
+module.exports = mongoose.model('Tool', toolSchema);
+-- Users Table
+Users: id, email, phone, verified, stripe_account_id, rating, created_at
+
+-- Tools Table  
+Tools: id, owner_id, name, category, description, daily_rate, location, images, availability
+
+-- Bookings Table
+Bookings: id, tool_id, renter_id, start_date, end_date, total_amount, status, stripe_payment_intent_id
+
+-- Reviews Table
+Reviews: id, booking_id, reviewer_id, reviewee_id, rating, comment
